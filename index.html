@@ -15,9 +15,10 @@
 <div class="progress no-print"><div class="bar"><div id="progressFill"></div></div><div class="status"><span id="saveStatus">Enter your assigned code to begin.</span></div></div>
 <h1>Build Your Retirement Plan</h1><div class="subtitle">Unit 3 Investing Summative • 100 points</div>
 <div class="hero"><strong>Your job:</strong> Build a reasonable long-term retirement strategy for a fictional 22-year-old. There is no single “perfect” portfolio. You earn points by following the process, using real research, doing the required math, and explaining your choices with sound financial reasoning.</div>
-<div class="callout good"><strong>KISS:</strong> This is not a scavenger hunt. Research links and calculators are built in. Your job is to make decisions and explain what they mean.</div>
-<div class="card"><label>Assigned code name (not your real name)</label><div class="grid"><input id="studentId" placeholder="Example: Brooklyn48291"><div><button class="primary" onclick="begin()">Begin / Load Saved Work</button></div></div></div>
-<details class="rubric"><summary>How will this be graded? View the 100-point rubric</summary><table><tr><th>Category</th><th>Points</th></tr><tr><td>Employer Match & $600 Monthly Decision</td><td>15</td></tr><tr><td>Retirement Income, Pension & Social Security Reasoning</td><td>15</td></tr><tr><td>Brokerage & Account Decision</td><td>5</td></tr><tr><td>Individual Stock Research</td><td>10</td></tr><tr><td>Stock Fund Research</td><td>10</td></tr><tr><td>Bond/Bond Fund Research</td><td>10</td></tr><tr><td>$10,000 Portfolio Construction</td><td>10</td></tr><tr><td>Portfolio Strategy & Vocabulary</td><td>15</td></tr><tr><td>Market Downturn Response</td><td>5</td></tr><tr><td>Compound Growth / Starting Early</td><td>5</td></tr><tr><th>Total</th><th>100</th></tr></table></details>
+<div class="callout good"><strong>This is not a scavenger hunt.</strong> Research links and calculators are built in. Your job is to make decisions and explain what the information means.</div>
+<div class="card"><label>Assigned code name (not your real name)</label><input id="studentId" placeholder="Example: Brooklyn48291"></div>
+<details class="rubric" id="rubricDetails"><summary>Before you begin: Read the 100-point rubric</summary><table><tr><th>Category</th><th>Points</th></tr><tr><td>Employer Match & $600 Monthly Decision</td><td>15</td></tr><tr><td>Retirement Income, Pension & Social Security Reasoning</td><td>15</td></tr><tr><td>Brokerage & Account Decision</td><td>5</td></tr><tr><td>Individual Stock Research</td><td>10</td></tr><tr><td>Stock Fund Research</td><td>10</td></tr><tr><td>Bond/Bond Fund Research</td><td>10</td></tr><tr><td>$10,000 Portfolio Construction</td><td>10</td></tr><tr><td>Portfolio Strategy & Vocabulary</td><td>15</td></tr><tr><td>Market Downturn Response</td><td>5</td></tr><tr><td>Compound Growth / Starting Early</td><td>5</td></tr><tr><th>Total</th><th>100</th></tr></table></details>
+<div class="card"><p><strong>Before continuing:</strong> Open the rubric above and read over how the project will be graded.</p><button class="primary" id="rubricAckBtn" onclick="acknowledgeRubric()">I have read over the rubric</button><span id="rubricAckStatus" class="status"></span><div style="margin-top:10px"><button class="gold" id="beginBtn" onclick="begin()" disabled>Begin / Load Saved Work</button></div></div>
 <div id="assignment" class="hidden">
 <section class="step"><span class="tag">Step 1</span><h2>Meet Your Financial Situation</h2><div class="card"><p>You are 22 and starting your first full-time job.</p><table class="data"><tr><th>Salary</th><td>$60,000/year</td></tr><tr><th>401(k)</th><td>Employer matches 100% of your contributions up to 4% of salary</td></tr><tr><th>Pension</th><td>This employer does not offer one</td></tr><tr><th>Discretionary money</th><td>$600/month after taxes, required expenses, and emergency savings</td></tr><tr><th>Long-term gift</th><td>$10,000 from an anonymous donor; all of it must be invested</td></tr></table></div></section>
 <section class="step"><span class="tag">Step 2</span><h2>Understand the Employer Match</h2><div class="card"><p>Calculate the employee contribution needed to receive the full employer match.</p><div class="grid3"><div><label>4% of $60,000</label><input id="matchAnnual" type="number" placeholder="$ per year"></div><div><label>Monthly amount</label><input id="matchMonthly" type="number" placeholder="$ per month"></div><div><label>Plan type</label><select id="planType"><option value="">Choose…</option><option>Defined-benefit pension</option><option>Defined-contribution plan</option></select></div></div><button onclick="checkMatch()">Check my math</button><div id="matchFeedback" class="callout hidden"></div></div></section>
@@ -39,13 +40,26 @@
 </div>
 <script>
 // After deploying Code.gs as a web app, paste the /exec URL here.
-const BACKEND_URL = 'PASTE_YOUR_APPS_SCRIPT_EXEC_URL_HERE';
+const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyD-ptLzsponf2hV_DHQ0kC1wU1fh52F4YhPdn4qIG4sd5MqNg6faBb9NKYWdCWIeL6/exec';
 const SHARED_SECRET = 'retire-plan-u3-2026';
 let saveTimer=null, finalResult=null;
 const $=id=>document.getElementById(id); const money=n=>'$'+Number(n||0).toLocaleString(undefined,{maximumFractionDigits:0});
 function allFields(){return [...document.querySelectorAll('#assignment input,#assignment textarea,#assignment select')];}
 function collect(){const o={};allFields().forEach(el=>o[el.id]=el.value);o.studentId=$('studentId').value.trim();o.computed={monthlyTotal:$('monthlyTotal').textContent,matchReceived:$('matchReceived').textContent,matchLeft:$('matchLeft').textContent,portfolioTotal:$('portfolioTotal').textContent,portfolioRemain:$('portfolioRemain').textContent,targetNoPension:$('targetNoPension').textContent,targetPension:$('targetPension').textContent,projNow:$('projNow').textContent,projWait:$('projWait').textContent};return o}
 function restore(s){if(!s)return;Object.entries(s).forEach(([k,v])=>{if($(k)&&typeof v!=='object')$(k).value=v});recalc();if($('gapNoPension').value)checkGap(false);if($('gapPension').value)checkPensionGap(false);if($('projectionMonthly').value)projectGrowth();}
+function acknowledgeRubric(){
+  const details=$('rubricDetails');
+  if(!details.open){
+    details.open=true;
+    alert('Please read over the rubric first. When you are finished, click “I have read over the rubric” again.');
+    details.scrollIntoView({behavior:'smooth',block:'start'});
+    return;
+  }
+  $('rubricAckBtn').disabled=true;
+  $('rubricAckBtn').textContent='Rubric read ✓';
+  $('rubricAckStatus').textContent=' You may begin the project.';
+  $('beginBtn').disabled=false;
+}
 async function begin(){const id=$('studentId').value.trim();if(id.length<5){alert('Enter your assigned code name first.');return}$('assignment').classList.remove('hidden');$('saveStatus').textContent='Loading saved work…';try{const r=await backend('load_state',{studentId:id},true);if(r&&r.state)restore(r.state);$('saveStatus').textContent=r&&r.state?'Saved work loaded.':'Ready — your work will save automatically.'}catch(e){$('saveStatus').textContent='Ready. Auto-save will retry if the server is busy.'}window.scrollTo({top:250,behavior:'smooth'})}
 function scheduleSave(){clearTimeout(saveTimer);$('saveStatus').textContent='Saving…';saveTimer=setTimeout(saveState,900)}
 async function saveState(){if(!$('studentId').value.trim())return;try{await backend('save_state',{studentId:$('studentId').value.trim(),state:collect()},true);$('saveStatus').textContent='Saved.'}catch(e){$('saveStatus').textContent='Saving delayed — will retry on your next change.'}}
